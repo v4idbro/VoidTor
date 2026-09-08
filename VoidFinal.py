@@ -104,16 +104,21 @@ def authenticate(sock):
 def new_tor_circuit():
     try:
         s = socket.create_connection(("127.0.0.1", TOR_CONTROL_PORT), timeout=5)
-    except Exception:
+    except Exception as e:
+        print(f"cannot reach control port: {e}")
         return False
 
     try:
         if not authenticate(s):
+            print("control port authentication failed")
             return False
 
         s.sendall(b"SIGNAL NEWNYM\r\n")
         resp = s.recv(1024).decode()
-        return "250" in resp
+        if "250" not in resp:
+            print(f"circuit request failed: {resp.strip()}")
+            return False
+        return True
     finally:
         s.close()
 
